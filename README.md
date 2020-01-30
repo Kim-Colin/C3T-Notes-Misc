@@ -16,7 +16,7 @@
 `badmath.h` is a header file that you include in calc.c so that you can define the functions (in this case add(x, y)).
 `gcc -o calc calc.c badmath.o` to compile the file.
 
-![Add Func](29JAN20/add_func.png)
+![](29JAN20/add_func.PNG)
 
 `badmath` returned 10 because, when the `add` function was called, `lea (%rax, %rax, 1), %edx` multiplies our first value 3\*2=6 and adds our second value to it when `add %edx, %eax` occurs. So 3\*2+4 = 10!
 
