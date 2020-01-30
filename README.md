@@ -1,6 +1,6 @@
-#Team Notes
+# Team Notes
 
-##Practice Notes
+## Practice Notes
 
 *Date (29 JAN 2020)*  
 
@@ -16,7 +16,7 @@
 `badmath.h` is a header file that you include in calc.c so that you can define the functions (in this case add(x, y)).
 `gcc -o calc calc.c badmath.o` to compile the file.
 
-![Add Func](./29JAN20/add_func.png)
+![Add Func](29JAN20/add_func.png)
 
 `badmath` returned 10 because, when the `add` function was called, `lea (%rax, %rax, 1), %edx` multiplies our first value 3\*2=6 and adds our second value to it when `add %edx, %eax` occurs. So 3\*2+4 = 10!
 
@@ -26,14 +26,14 @@
 
 3) Not Gonna Lie, Kinda fell behind in the midst of taking notes, just going to listen to the rest (creating goodmath)
 
-##Challenge Notes
+## Challenge Notes
 
-###Web Exploitation
+### Web Exploitation
 
 *Bite Me*
 
 
-##Things I've Learned / Misc
+## Things I've Learned / Misc
 
 *Working with GIT (29 JAN 2020)*
 - Pull/Push
@@ -49,5 +49,5 @@
 `readelf -s <filename>` gives back list of symbols
 
 
-#Sad Boi Hours / Hello Darkness My Old Friend / Safe Space#
+# Sad Boi Hours / Hello Darkness My Old Friend / Safe Space
 - I spent 10 min wondering why `objdump -s <filename>` was not giving me symbols. It's `readelf -s` ...
