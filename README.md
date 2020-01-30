@@ -41,6 +41,8 @@ TL;DR:
 - rip(eip): Instruction Pointer
 - rax(eax): Return Register
 
+![](30JAN20/registers.PNG)
+
 1) **AX is the primary accumulator**; it is used in input/output and most arithmetic instructions. For example, in multiplication operation, one operand is stored in EAX or AX or AL register according to the size of the operand.
 
 2) **BX is known as the base register**; as it could be used in indexed addressing.
