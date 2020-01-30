@@ -26,6 +26,56 @@
 
 3) Not Gonna Lie, Kinda fell behind in the midst of taking notes, just going to listen to the rest (creating goodmath)
 
+*Date (30 JAN 2020)*
+
+Levels of Abstraction such as:
+- C code
+- Assembly Code
+- Computer Logic i.e. gates, clocks, circuit layout, etc.
+
+[Registers](https://www.tutorialspoint.com/assembly_programming/assembly_registers.htm):
+
+TL;DR:
+- rbp(ebp): Base Pointer
+- rsp(esp): Stack Pointer
+- rip(eip): Instruction Pointer
+- rax(eax): Return Register
+
+1) **AX is the primary accumulator**; it is used in input/output and most arithmetic instructions. For example, in multiplication operation, one operand is stored in EAX or AX or AL register according to the size of the operand.
+
+2) **BX is known as the base register**; as it could be used in indexed addressing.
+
+3) **CX is known as the count register**; as the ECX, CX registers store the loop count in iterative operations.
+
+4) **DX is known as the data register**; It is also used in input/output operations. It is also used with AX register along with DX for multiply and divide operations involving large values.
+
+5) **Instruction Pointer (IP)**; The 16-bit IP register stores the offset address of the next instruction to be executed. IP in association with the CS register (as CS:IP) gives the complete address of the current instruction in the code segment.
+
+6) **Stack Pointer (SP)**; The 16-bit SP register provides the offset value within the program stack. SP in association with the SS register (SS:SP) refers to be current position of data or address within the program stack.
+
+7) **Base Pointer (BP)**; The 16-bit BP register mainly helps in referencing the parameter variables passed to a subroutine. The address in SS register is combined with the offset in BP to get the location of the parameter. BP can also be combined with DI and SI as base register for special addressing.
+
+8) **Source Index (SI)**; It is used as source index for string operations.
+
+9) **Destination Index (DI)**; It is used as destination index for string operations
+
+
+
+**Note: Intel uses (mov Dest, Source)**
+
+D(Rb,Ri,S) == Mem[Reg[Rb] + S\*Reg[Ri] + D]
+
+First S\*Ri; then Rb + sum; finally result + D
+
+Sizing:
+
+- movq (8 bytes = quad word)
+- movl (4 bytes = long)
+- movw (2 bytes = word)
+- movb (1 byte = byte)
+
+
+
 ## Challenge Notes
 
 ### Web Exploitation
