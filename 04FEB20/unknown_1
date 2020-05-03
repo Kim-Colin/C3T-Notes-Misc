@@ -1,0 +1,13 @@
+unknown_1:	
+	push    rbp
+        mov     rbp, rsp
+        mov     DWORD PTR [rbp-20], edi
+        mov     DWORD PTR [rbp-24], esi
+        mov     eax, DWORD PTR [rbp-20]
+        lea     edx, [rax+5]
+        mov     eax, DWORD PTR [rbp-24]
+        add     eax, edx
+        mov     DWORD PTR [rbp-4], eax
+        mov     eax, DWORD PTR [rbp-4]
+        pop     rbp
+        ret

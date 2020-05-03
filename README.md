@@ -76,7 +76,14 @@ Sizing:
 - movw (2 bytes = word)
 - movb (1 byte = byte)
 
+*Date (04 FEB 2020)*
 
+![](04FEB20/asm1.PNG)
+
+The highlighted assembly is code optimization for adding. In this case, rax (a value/number) is added with '5'. The result is stored in edx
+
+
+*Date (05 FEB 2020)*
 
 ## Challenge Notes
 
@@ -99,6 +106,8 @@ Sizing:
 `echo $?` prints exit status of last function, command, script
 
 `readelf -s <filename>` gives back list of symbols
+
+SSH_tunneling/proxy (31JAN20 Folder for more info)
 
 
 # Sad Boi Hours / Hello Darkness My Old Friend / Safe Space

